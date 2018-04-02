@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PDF_Compliance_Converter"
         mc:Ignorable="d"
-        Title="PDF Compliance Converter" Height="350" Width="400">
+        Title="PDF Compliance Converter" Height="350" Width="400" MinHeight="350" MinWidth="400">
     <DockPanel LastChildFill="True">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_About" />
@@ -15,14 +15,28 @@
         </StatusBar>
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="90" />
+                <ColumnDefinition Width="50" />
+                <ColumnDefinition Width="90" />
+                <ColumnDefinition Width="*" />                
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" MinHeight="100" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="35" />
+                <RowDefinition Height="35" />
+                <RowDefinition Height="50" />
             </Grid.RowDefinitions>
+            <ListBox Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="5" Margin="10" />
+            <CheckBox Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="5" Margin="10"
+                      HorizontalAlignment="Center" 
+                      Content="Mirror Source Folder Structure" />
+            <Button Grid.Column="1" Grid.Row="2" Margin="5" Content="Add Folder" />
+            <Button Grid.Column="3" Grid.Row="2" Margin="5" Content="Convert" />
+            <Button Grid.Column="1" Grid.Row="3" Margin="5" Content="Remove" />
+            <Button Grid.Column="3" Grid.Row="3" Margin="5" Content="Cancel" />
+            <ProgressBar Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="5" Margin="20,10,20,10" />
         </Grid>
     </DockPanel>
 </Window>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using iTextSharp.text.pdf;
 using NLog;
 
@@ -10,6 +11,25 @@ namespace PDF_Compliance_Converter
     public class Converter
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
+        private CancellationTokenSource token;
+
+        /// <summary>
+        /// Creates an instance of <see cref="Converter"/>.
+        /// </summary>
+        public Converter()
+        {
+            // do nothing here
+        }
+
+        /// <summary>
+        /// Creates an instance of <see cref="Converter"/>.
+        /// </summary>
+        /// <param name="token">The <see cref="CancellationTokenSource"/> instance 
+        /// to use for cancelling the folder conversion process.</param>
+        public Converter(CancellationTokenSource token)
+        {
+            this.token = token;
+        }
 
         /// <summary>
         /// Rubber stamps an image based PDF as a PDF/A-1B pdf.
@@ -58,6 +78,12 @@ namespace PDF_Compliance_Converter
 
             foreach (FileInfo pdf in pdfs)
             {
+                if (token != null && token.IsCancellationRequested)
+                {
+                    OnError(new Tuple<FileInfo, Exception>(pdf, new Exception("The process has been cancelled.")));
+                    break;
+                }
+
                 try
                 {
                     FileInfo oldPdf = pdf;
