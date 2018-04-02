@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -18,15 +20,22 @@ namespace PDF_Compliance_Converter
         private string destination = String.Empty;
         private int errorCount = 0;
         private bool isEnabled = true;
-        private List<string> folders = new List<string>();        
+        private bool isWorking = false;
+        private ObservableCollection<string> folders = new ObservableCollection<string>();
         private bool mirrorFolders = false;
         private int processedCount = 0;
         private int progress = 0;
         private string statusMessage = "Ready";
-        private BackgroundWorker worker = new BackgroundWorker() {
-            WorkerReportsProgress = true,
-            WorkerSupportsCancellation = true            
-        };
+        private BackgroundWorker worker = new BackgroundWorker();
+        #endregion
+
+        #region Constructors
+        public Presenter()
+        {
+            worker.WorkerReportsProgress = true;
+            worker.WorkerSupportsCancellation = true;
+            folders.CollectionChanged += FoldersChanged;
+        }
         #endregion
 
         #region Properties
@@ -51,9 +60,29 @@ namespace PDF_Compliance_Converter
         }
 
         /// <summary>
+        /// Returns true if the background worker is working otherwise false;
+        /// </summary>
+        public bool IsWorking
+        {
+            get
+            {
+                return isWorking;
+            }
+
+            set
+            {
+                if (isWorking != value)
+                {
+                    isWorking = value;
+                    base.OnPropertyChanged(nameof(IsWorking));
+                }
+            }
+        }
+
+        /// <summary>
         /// The folders that contain the source data.
         /// </summary>
-        public List<string> Folders
+        public ObservableCollection<string> Folders
         {
             get
             {
@@ -178,8 +207,11 @@ namespace PDF_Compliance_Converter
         {
             using (FolderBrowserDialog dialog = new FolderBrowserDialog())
             {
-                string folder = dialog.SelectedPath;
-                Folders.Add(folder);
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    string folder = dialog.SelectedPath;
+                    Folders.Add(folder);
+                }
             }
         }
 
@@ -250,22 +282,46 @@ namespace PDF_Compliance_Converter
         }
 
         private void Execute()
+        {            
+            using (FolderBrowserDialog dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "Select the destination folder.";
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    destination = dialog.SelectedPath;
+                }
+            }
+
+            if (!String.IsNullOrWhiteSpace(destination) && Directory.Exists(destination))
+            {
+                IsEnabled = false;
+                IsWorking = true;
+                Progress = 0;
+                WorkArgs args = new WorkArgs();
+                args.Destination = new DirectoryInfo(destination);
+                args.Folders = folders;
+                args.MirrorFolders = mirrorFolders;
+                worker.DoWork += BackgroundWork;
+                worker.ProgressChanged += BackgroundWorkProgress;
+                worker.RunWorkerCompleted += BackgroundWorkComplete;
+                worker.RunWorkerAsync(args);
+            }
+            else
+            {
+                MessageBox.Show("The destination does not exist.");
+            }
+        }
+
+        private void FoldersChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            IsEnabled = false;
-            Progress = 0;
-            WorkArgs args = new WorkArgs();
-            args.Destination = new DirectoryInfo(destination);
-            args.Folders = folders;
-            args.MirrorFolders = mirrorFolders;
-            worker.DoWork += BackgroundWork;
-            worker.ProgressChanged += BackgroundWorkProgress;
-            worker.RunWorkerCompleted += BackgroundWorkComplete;
-            worker.RunWorkerAsync(args);
+            base.OnPropertyChanged(nameof(Folders));            
         }
 
         private void RemoveFolder(object parameter)
         {
-            string folder = parameter as string;
+            var listBox = parameter as System.Windows.Controls.ListBox;
+            string folder = listBox.SelectedItem.ToString();
             Folders.Remove(folder);
         }
         #endregion

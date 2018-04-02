@@ -6,6 +6,9 @@
         xmlns:local="clr-namespace:PDF_Compliance_Converter"
         mc:Ignorable="d"
         Title="PDF Compliance Converter" Height="350" Width="400" MinHeight="350" MinWidth="400">
+    <Window.DataContext>
+        <local:Presenter />
+    </Window.DataContext>
     <DockPanel LastChildFill="True">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_About" />
@@ -16,9 +19,9 @@
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="90" />
+                <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="50" />
-                <ColumnDefinition Width="90" />
+                <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="*" />                
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
@@ -28,15 +31,45 @@
                 <RowDefinition Height="35" />
                 <RowDefinition Height="50" />
             </Grid.RowDefinitions>
-            <ListBox Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="5" Margin="10" />
+            <ListBox Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="5" 
+                     Margin="10"
+                     Name="ListBoxFolders"
+                     ItemsSource="{Binding Folders}" >
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
             <CheckBox Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="5" Margin="10"
                       HorizontalAlignment="Center" 
-                      Content="Mirror Source Folder Structure" />
-            <Button Grid.Column="1" Grid.Row="2" Margin="5" Content="Add Folder" />
-            <Button Grid.Column="3" Grid.Row="2" Margin="5" Content="Convert" />
-            <Button Grid.Column="1" Grid.Row="3" Margin="5" Content="Remove" />
-            <Button Grid.Column="3" Grid.Row="3" Margin="5" Content="Cancel" />
-            <ProgressBar Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="5" Margin="20,10,20,10" />
+                      Content="Mirror Source Folder Structure" IsChecked="{Binding MirrorFolders}" />
+            <Button Grid.Column="1" Grid.Row="2" 
+                    Margin="5" 
+                    Content="Add Folder" 
+                    Command="{Binding Path=AddFolderCommand}" 
+                    IsEnabled="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Grid.Column="3" Grid.Row="2" 
+                    Margin="5" 
+                    Content="Convert" 
+                    Command="{Binding Path=ExecuteCommand}" 
+                    IsEnabled="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Grid.Column="1" Grid.Row="3" 
+                    Margin="5" 
+                    Content="Remove Folder" 
+                    Command="{Binding Path=RemoveFolderCommand}"
+                    CommandParameter="{Binding ElementName=ListBoxFolders}"
+                    IsEnabled="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Grid.Column="3" Grid.Row="3" 
+                    Margin="5" 
+                    Content="Cancel" 
+                    Command="{Binding Path=CancelCommand}" 
+                    IsEnabled="{Binding IsWorking, UpdateSourceTrigger=PropertyChanged}" />
+            <ProgressBar Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="5" 
+                         Margin="20,10,20,10" 
+                         Value="{Binding Progress, UpdateSourceTrigger=PropertyChanged}" />
         </Grid>
     </DockPanel>
 </Window>
