@@ -7,7 +7,7 @@ using NLog;
 
 namespace PDF_Compliance_Converter
 {
-    public class Stamper
+    public class Converter
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -16,7 +16,7 @@ namespace PDF_Compliance_Converter
         /// </summary>
         /// <param name="oldFile">The original pdf file.</param>
         /// <param name="newFile">The new pdf file.</param>
-        public void StampPDF(FileInfo oldFile, FileInfo newFile)
+        public void ConvertPDF(FileInfo oldFile, FileInfo newFile)
         {            
             using (FileStream fs = new FileStream(newFile.FullName, FileMode.Create, FileAccess.Write))
             using (PdfReader pdf = new PdfReader(oldFile.FullName))
@@ -40,7 +40,7 @@ namespace PDF_Compliance_Converter
                 doc.Close();                
             }
 
-            OnPdfStamped(oldFile);
+            OnPdfConverted(oldFile);
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace PDF_Compliance_Converter
         /// <param name="folders">The target folders.</param>
         /// <param name="outFolder">The output folder</param>
         /// <param name="mirrorSource">Indicates if the folder structure should be mirrored.</param>
-        public void StampPDFsInFolders(string[] folders, DirectoryInfo outFolder, bool mirrorSource)
+        public void ConvertPDFsInFolders(string[] folders, DirectoryInfo outFolder, bool mirrorSource)
         {
             IEnumerable<FileInfo> pdfs = folders
                 .Select(folder => new DirectoryInfo(folder))
@@ -68,7 +68,7 @@ namespace PDF_Compliance_Converter
                         newPdf = MirrorSourceFolder(pdf, outFolder, folders);
                     }
 
-                    StampPDF(oldPdf, newPdf);
+                    ConvertPDF(oldPdf, newPdf);
                     logger.Info($"Converted: {pdf.FullName}");
                 }
                 catch (Exception ex)
@@ -79,33 +79,33 @@ namespace PDF_Compliance_Converter
                 }
 
                 int progress = (int)((double)++counter / (double)pdfs.Count() * 100.0f);
-                OnReportStampFolderProgress(progress);
+                OnReportFolderProgress(progress);
             }
         }
 
         /// <summary>
-        /// Reports the progress of <see cref="StampPDFsInFolders(string[], DirectoryInfo, bool)"/>.
+        /// Reports the progress of <see cref="ConvertPDFsInFolders(string[], DirectoryInfo, bool)"/>.
         /// </summary>
-        public event EventHandler<int> ReportStampFolderProgress;
+        public event EventHandler<int> ReportFolderProgress;
 
         /// <summary>
-        /// Occurs on the completion of <see cref="StampPDF(FileInfo, FileInfo)"/>.
+        /// Occurs on the completion of <see cref="ConvertPDF(FileInfo, FileInfo)"/>.
         /// </summary>
-        public event EventHandler<FileInfo> PdfStamped;
+        public event EventHandler<FileInfo> PdfConverted;
 
         /// <summary>
-        /// Occurs when an error happens in <see cref="StampPDFsInFolders(string[], DirectoryInfo, bool)"/>.
+        /// Occurs when an error happens in <see cref="ConvertPDFsInFolders(string[], DirectoryInfo, bool)"/>.
         /// </summary>
         public event EventHandler<Tuple<FileInfo, Exception>> Error;
                 
-        protected virtual void OnReportStampFolderProgress(int progress)
+        protected virtual void OnReportFolderProgress(int progress)
         {
-            ReportStampFolderProgress?.Invoke(this, progress);
+            ReportFolderProgress?.Invoke(this, progress);
         }
 
-        protected virtual void OnPdfStamped(FileInfo file)
+        protected virtual void OnPdfConverted(FileInfo file)
         {
-            PdfStamped?.Invoke(this, file);
+            PdfConverted?.Invoke(this, file);
         }
 
         protected virtual void OnError(Tuple<FileInfo, Exception> args)
