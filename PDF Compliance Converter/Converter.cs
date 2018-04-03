@@ -99,7 +99,7 @@ namespace PDF_Compliance_Converter
                 }
                 catch (Exception ex)
                 {                    
-                    logger.Error(pdf.FullName);
+                    logger.Error($"Error: {pdf.FullName}");
                     logger.Error(ex);
                     OnError(new Tuple<FileInfo, Exception>(pdf, ex));
                 }

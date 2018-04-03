@@ -14,7 +14,7 @@
             <MenuItem Header="_About" />
         </Menu>
         <StatusBar DockPanel.Dock="Bottom">
-            <Label>Ready</Label>
+            <Label Content="{Binding StatusMessage}" />
         </StatusBar>
         <Grid>
             <Grid.ColumnDefinitions>

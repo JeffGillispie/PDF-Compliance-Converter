@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using System.Windows.Input;
+using NLog;
 
 namespace PDF_Compliance_Converter
 {
@@ -17,6 +18,7 @@ namespace PDF_Compliance_Converter
     public class Presenter : ObservableObject
     {
         #region Private Member Variables
+        private static Logger logger = LogManager.GetCurrentClassLogger();
         private string destination = String.Empty;
         private int errorCount = 0;
         private bool isEnabled = true;
@@ -237,6 +239,7 @@ namespace PDF_Compliance_Converter
             }
             catch (Exception ex)
             {
+                logger.Error(ex);
                 e.Result = ex;
             }
         }
@@ -246,13 +249,15 @@ namespace PDF_Compliance_Converter
             if (e.UserState != null && e.UserState.GetType().Equals(typeof(FileInfo)))
             {
                 var file = e.UserState as FileInfo;
-                this.processedCount++;
-                StatusMessage = $"Processing: {file.Name}";
+                this.processedCount++;                
+                StatusMessage = $"Processed: {file.Name}";
             }
-            else if (e.UserState != null && e.UserState.GetType().Equals(typeof(Exception)))
+            else if (e.UserState != null && e.UserState.GetType().Equals(typeof(Tuple<FileInfo, Exception>)))
             {
-                var ex = e.UserState as Exception;
-                this.errorCount++;
+                var tuple = e.UserState as Tuple<FileInfo, Exception>;
+                var file = tuple.Item1;
+                var ex = tuple.Item2;
+                this.errorCount++;                
                 StatusMessage = $"Error: {ex.Message}";
             }
             else
@@ -265,19 +270,20 @@ namespace PDF_Compliance_Converter
         {
             if (e.Result != null && e.Result.GetType().Equals(typeof(Exception)))
             {
-                var ex = e.Result as Exception;
-                MessageBox.Show($"There was a problem processing the files. {ex.Message}");
+                var ex = e.Result as Exception;                
+                MessageBox.Show($"There was a problem during processing. {ex.Message}");
             }
-            else
-            {
-                Progress = 100;
-                string msg = $"The process has completed with {processedCount} files processed and {errorCount} errors.";
-                MessageBox.Show(msg);
-            }
+                        
+            Progress = 100;
+            StatusMessage = (errorCount == 0) ? "Completed with no errors." : $"Completed with {errorCount} errors.";
+            string msg = $"The process has completed with {processedCount} files processed and {errorCount} errors.";
+            logger.Info(msg);
+            MessageBox.Show(msg);            
         }
 
         private void Cancel()
         {
+            logger.Warn("Cancellation requested.");
             worker.CancelAsync();
         }
 
@@ -290,6 +296,7 @@ namespace PDF_Compliance_Converter
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     destination = dialog.SelectedPath;
+                    logger.Info($"Destination: {destination}");
                 }
             }
 
@@ -298,6 +305,7 @@ namespace PDF_Compliance_Converter
                 IsEnabled = false;
                 IsWorking = true;
                 Progress = 0;
+                logger.Info($"Sources: {String.Join(", ", folders)}");
                 WorkArgs args = new WorkArgs();
                 args.Destination = new DirectoryInfo(destination);
                 args.Folders = folders;
